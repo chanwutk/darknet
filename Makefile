@@ -17,37 +17,60 @@ ZED_CAMERA_v2_8=0
 USE_CPP=0
 DEBUG=0
 
-ARCH= -gencode arch=compute_30,code=sm_30 \
-      -gencode arch=compute_35,code=sm_35 \
-      -gencode arch=compute_50,code=[sm_50,compute_50] \
-      -gencode arch=compute_52,code=[sm_52,compute_52] \
-	    -gencode arch=compute_61,code=[sm_61,compute_61]
-
 OS := $(shell uname)
 
-# Tesla A100 (GA100), DGX-A100, RTX 3080
-ARCH= -gencode arch=compute_80,code=[sm_80,compute_80]
+# Auto-detect GPU architecture
+GPU_COMPUTE_CAP := $(shell nvidia-smi --query-gpu=compute_cap --format=csv,noheader,nounits | head -1 | tr -d ' ')
 
-# GeForce RTX 2080 Ti, RTX 2080, RTX 2070, Quadro RTX 8000, Quadro RTX 6000, Quadro RTX 5000, Tesla T4, XNOR Tensor Cores
-ARCH= -gencode arch=compute_75,code=[sm_75,compute_75]
+# Set ARCH based on detected compute capability
+ifeq ($(GPU_COMPUTE_CAP),8.0)
+    # Tesla A100 (GA100), DGX-A100, RTX 3080
+    ARCH= -gencode arch=compute_80,code=[sm_80,compute_80]
+else ifeq ($(GPU_COMPUTE_CAP),7.5)
+    # GeForce RTX 2080 Ti, RTX 2080, RTX 2070, Quadro RTX 8000, Quadro RTX 6000, Quadro RTX 5000, Tesla T4, XNOR Tensor Cores
+    ARCH= -gencode arch=compute_75,code=[sm_75,compute_75]
+else ifeq ($(GPU_COMPUTE_CAP),7.2)
+    # Jetson XAVIER
+    ARCH= -gencode arch=compute_72,code=[sm_72,compute_72]
+else ifeq ($(GPU_COMPUTE_CAP),7.0)
+    # Tesla V100
+    ARCH= -gencode arch=compute_70,code=[sm_70,compute_70]
+else ifeq ($(GPU_COMPUTE_CAP),6.2)
+    # For Jetson Tx2 or Drive-PX2 uncomment:
+    ARCH= -gencode arch=compute_62,code=[sm_62,compute_62]
+else ifeq ($(GPU_COMPUTE_CAP),6.1)
+    # GTX 1080, GTX 1070, GTX 1060, GTX 1050, GTX 1030, Titan Xp, Tesla P40, Tesla P4
+    ARCH= -gencode arch=compute_61,code=sm_61 -gencode arch=compute_61,code=compute_61
+else ifeq ($(GPU_COMPUTE_CAP),6.0)
+    # GP100/Tesla P100 - DGX-1
+    ARCH= -gencode arch=compute_60,code=sm_60
+else ifeq ($(GPU_COMPUTE_CAP),5.3)
+    # For Jetson TX1, Tegra X1, DRIVE CX, DRIVE PX - uncomment:
+    ARCH= -gencode arch=compute_53,code=[sm_53,compute_53]
+else ifeq ($(GPU_COMPUTE_CAP),5.2)
+    # GTX 980, GTX 970, GTX 960, GTX 950, GTX 750 Ti, GTX 750, GTX 650
+    ARCH= -gencode arch=compute_52,code=[sm_52,compute_52]
+else ifeq ($(GPU_COMPUTE_CAP),5.0)
+    # GTX 750 Ti, GTX 750, GTX 650
+    ARCH= -gencode arch=compute_50,code=[sm_50,compute_50]
+else ifeq ($(GPU_COMPUTE_CAP),3.5)
+    # GTX 780, GTX 770, GTX 760, GTX 660 Ti, GTX 660, GTX 650 Ti, GTX 650
+    ARCH= -gencode arch=compute_35,code=sm_35
+else ifeq ($(GPU_COMPUTE_CAP),3.0)
+    # GTX 780 Ti, GTX 780, GTX 770, GTX 760, GTX 680, GTX 670, GTX 660 Ti, GTX 660, GTX 650 Ti, GTX 650
+    ARCH= -gencode arch=compute_30,code=sm_30
+else
+    # Fallback to default multi-arch for unknown compute capabilities
+    ARCH= -gencode arch=compute_30,code=sm_30 \
+          -gencode arch=compute_35,code=sm_35 \
+          -gencode arch=compute_50,code=[sm_50,compute_50] \
+          -gencode arch=compute_52,code=[sm_52,compute_52] \
+          -gencode arch=compute_61,code=[sm_61,compute_61]
+endif
 
-# Jetson XAVIER
-ARCH= -gencode arch=compute_72,code=[sm_72,compute_72]
-
-# Tesla V100
-ARCH= -gencode arch=compute_70,code=[sm_70,compute_70]
-
-# For Jetson Tx2 or Drive-PX2 uncomment:
-ARCH= -gencode arch=compute_62,code=[sm_62,compute_62]
-
-# GTX 1080, GTX 1070, GTX 1060, GTX 1050, GTX 1030, Titan Xp, Tesla P40, Tesla P4
-ARCH= -gencode arch=compute_61,code=sm_61 -gencode arch=compute_61,code=compute_61
-
-# GP100/Tesla P100 - DGX-1
-ARCH= -gencode arch=compute_60,code=sm_60
-
-# For Jetson TX1, Tegra X1, DRIVE CX, DRIVE PX - uncomment:
-ARCH= -gencode arch=compute_53,code=[sm_53,compute_53]
+# Display detected GPU architecture
+$(info Detected GPU compute capability: $(GPU_COMPUTE_CAP))
+$(info Using ARCH: $(ARCH))
 
 
 VPATH=./src/
