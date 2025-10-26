@@ -40,7 +40,7 @@ else ifeq ($(GPU_COMPUTE_CAP),6.2)
     ARCH= -gencode arch=compute_62,code=[sm_62,compute_62]
 else ifeq ($(GPU_COMPUTE_CAP),6.1)
     # GTX 1080, GTX 1070, GTX 1060, GTX 1050, GTX 1030, Titan Xp, Tesla P40, Tesla P4
-    ARCH= -gencode arch=compute_61,code=sm_61 -gencode arch=compute_61,code=compute_61
+    ARCH= -gencode arch=compute_61,code=[sm_61,compute_61]
 else ifeq ($(GPU_COMPUTE_CAP),6.0)
     # GP100/Tesla P100 - DGX-1
     ARCH= -gencode arch=compute_60,code=sm_60
